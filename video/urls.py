@@ -1,28 +1,17 @@
-from django.conf.urls import url, include
+from django.conf.urls import url
 from .views.tv_show_views import (
     ListCreateTvShowView,
     ListCreateSeasonsView,
 )
+from .views.torrents import ListCreateTorrentView
+
 from .views.movies import ListCreateMoviesView
-from .views.views import (
-    CreateTorrentView,
-    DetailsTorrentView,
-    CreateVideoView,
-    CreateChapterView,
-    CreateSeasonView,
-    DetailsChapterView,
-    DetailsSeasonView,
-    DetailsVideoView,
-)
+
 from rest_framework.urlpatterns import format_suffix_patterns
 
 
 urlpatterns = {
-    url(r'^torrents/$', CreateTorrentView.as_view()),
-    url(
-        r'^torrents/(?P<pk>\d+)/$',
-        DetailsTorrentView.as_view()
-    ),
+    url(r'^torrents/$', ListCreateTorrentView.as_view()),
     url(r'^movies/$', ListCreateMoviesView.as_view()),
     url(
         r'^tv-shows/$',
