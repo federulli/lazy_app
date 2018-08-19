@@ -9,8 +9,7 @@ from ..serializers import (
     VideoSerializer,
     SeasonSerializer,
 )
-from torrent_searcher.pirate_bay_searcher import PirateBaySearcher
-import os
+from ..tasks import new_season_task
 
 
 class ListCreateTvShowView(generics.ListCreateAPIView):
@@ -37,23 +36,4 @@ class ListCreateSeasonsView(generics.ListCreateAPIView):
         serializer.save(
             video=video
         )
-        searcher = PirateBaySearcher('https://thepiratebay.org/')
-        torrents_data = searcher.search_for_tv_show(
-            video.name, serializer.data['number']
-        )
-        for number, torrent in torrents_data.items():
-            torrent_instance = Torrent(
-                        magnet=torrent.magnet_link,
-                        status=Torrent.IN_PROGRESS,
-                        download_path=os.path.join(
-                            video.download_path,
-                            video.name
-                        )
-                    )
-            torrent_instance.save()
-            chapter = Chapter(
-                number=number,
-                torrent=torrent_instance,
-                season=serializer.instance
-            )
-            chapter.save()
+        new_season_task.delay(serializer.instance.id)
