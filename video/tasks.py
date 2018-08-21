@@ -31,6 +31,8 @@ def new_season_task(self, season_id):
     torrents_data = searcher.search_for_tv_show(
         season.video.name, season.number
     )
+    if len(torrents_data.items()) >= season.chapter_count:
+        season.completed = True
     for number, torrent in torrents_data.items():
         torrent_instance = Torrent(
             magnet=torrent.magnet_link,
@@ -69,5 +71,32 @@ def search_for_not_found_movies(self):
 
 
 @app.task(bind=True)
-def search_for_chapters_not_found(self):
-    pass
+def search_for_not_found_chapters(self):
+    not_completed = Season.objects.filter(completed=False)
+    searcher = PirateBaySearcher('https://thepiratebay.org/')
+    for season in not_completed:
+        chapter_numbers = set(chapter.number
+                              for chapter in season.chapters.all())
+        torrents_data = searcher.search_for_tv_show(
+            season.video.name, season.number
+        )
+        if len(torrents_data.items()) >= season.chapter_count:
+            season.completed = True
+        for number, torrent in torrents_data.items():
+            if number in chapter_numbers:
+                continue
+            torrent_instance = Torrent(
+                magnet=torrent.magnet_link,
+                status=Torrent.IN_PROGRESS,
+                download_path=os.path.join(
+                    season.video.download_path,
+                    season.video.name
+                )
+            )
+            torrent_instance.save()
+            chapter = Chapter(
+                number=number,
+                torrent=torrent_instance,
+                season=season
+            )
+            chapter.save()

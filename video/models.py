@@ -32,9 +32,11 @@ class Torrent(models.Model):
 
 
 class Video(models.Model):
+    TV_SHOW = 'TVSHOW'
+    MOVIE = 'MOVIE'
     TYPES = (
-        ('TVSHOW', 'TV Show'),
-        ('MOVIE', 'Movie')
+        (TV_SHOW, 'TV Show'),
+        (MOVIE, 'Movie')
     )
     name = models.TextField()
     type = models.CharField(max_length=6, choices=TYPES)
@@ -51,6 +53,7 @@ class Season(models.Model):
         on_delete=models.CASCADE
     )
     chapter_count = models.IntegerField()
+    completed = models.BooleanField(default=False)
 
 
 class Chapter(models.Model):
