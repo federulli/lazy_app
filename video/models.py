@@ -66,3 +66,8 @@ class Chapter(models.Model):
         on_delete=models.CASCADE,
         related_name='show'
     )
+
+
+class Configuration(models.Model):
+    name = models.TextField(unique=True)
+    value = models.TextField()

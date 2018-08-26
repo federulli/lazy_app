@@ -7,3 +7,4 @@ lxml
 purl
 celery==4.1.1
 django-celery
+subliminal
