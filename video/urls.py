@@ -4,13 +4,14 @@ from .views.tv_show_views import (
     ListCreateSeasonsView,
 )
 from .views.torrents import ListCreateTorrentView
-
+from .views.configuration import ConfigurationView
 from .views.movies import ListCreateMoviesView
 from .views.refresh import RefreshView
 from rest_framework.urlpatterns import format_suffix_patterns
 
 
 urlpatterns = {
+    url(r'^configurations/$', ConfigurationView.as_view()),
     url(r'^torrents/$', ListCreateTorrentView.as_view()),
     url(r'^movies/$', ListCreateMoviesView.as_view()),
     url(
