@@ -40,7 +40,6 @@ class Video(models.Model):
     )
     name = models.TextField()
     type = models.CharField(max_length=6, choices=TYPES)
-    download_path = models.TextField()
     torrent = models.ForeignKey(Torrent, on_delete=models.CASCADE,
                                 related_name='movie', null=True)
 

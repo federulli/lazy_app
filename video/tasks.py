@@ -39,7 +39,9 @@ def new_season_task(self, season_id):
     torrents_data = searcher.search_for_tv_show(
         season.video.name, season.number
     )
+    print("Torrents found {}".format(len(torrents_data.items())))
     if len(torrents_data.items()) >= season.chapter_count:
+        print("Completed")
         season.completed = True
         season.save()
     for number, torrent in torrents_data.items():
