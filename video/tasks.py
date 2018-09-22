@@ -8,6 +8,7 @@ from video.models import (
 )
 from torrent_searcher.yts_searcher import YTSSearcher
 from torrent_searcher.pirate_bay_searcher import PirateBaySearcher
+from torrent_searcher.rarbg_searcher import RarbgSearcher
 from .configuration import Configuration
 
 
@@ -35,9 +36,9 @@ def new_movie_task(self, video_id):
 def new_season_task(self, season_id):
     config = Configuration()
     season = Season.objects.get(pk=season_id)
-    searcher = PirateBaySearcher(config.tpb_url)
+    searcher = RarbgSearcher()
     torrents_data = searcher.search_for_tv_show(
-        season.video.name, season.number
+        season.video.name, season.number, season.chapter_count
     )
     print("Torrents found {}".format(len(torrents_data.items())))
     if len(torrents_data.items()) >= season.chapter_count:
@@ -45,21 +46,22 @@ def new_season_task(self, season_id):
         season.completed = True
         season.save()
     for number, torrent in torrents_data.items():
-        torrent_instance = Torrent(
-            magnet=torrent.magnet_link,
-            status=Torrent.IN_PROGRESS,
-            download_path=os.path.join(
-                config.tv_show_download_path,
-                season.video.name
+        if torrent:
+            torrent_instance = Torrent(
+                magnet=torrent.download,
+                status=Torrent.IN_PROGRESS,
+                download_path=os.path.join(
+                    config.tv_show_download_path,
+                    season.video.name
+                )
             )
-        )
-        torrent_instance.save()
-        chapter = Chapter(
-            number=number,
-            torrent=torrent_instance,
-            season=season
-        )
-        chapter.save()
+            torrent_instance.save()
+            chapter = Chapter(
+                number=number,
+                torrent=torrent_instance,
+                season=season
+            )
+            chapter.save()
 
 
 @app.task(bind=True)

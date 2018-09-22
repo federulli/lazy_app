@@ -8,3 +8,7 @@
 5) sudo supervisord
 6) if listening port error sudo unlink /var/run/supervisor.sock
  and repeat 5)
+
+
+sudo apt-get install libtorrent-rasterbar-dev
+./configure COMPILED_BY="Mausy5043" --with-boost-libdir=/usr/lib/arm-linux-gnueabihf
