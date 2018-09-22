@@ -88,21 +88,21 @@ def search_for_not_found_movies(self):
 def search_for_not_found_chapters(self):
     config = Configuration()
     not_completed = Season.objects.filter(completed=False)
-    searcher = PirateBaySearcher(config.tpb_url)
+    searcher = RarbgSearcher()
     for season in not_completed:
         chapter_numbers = set(chapter.number
                               for chapter in season.chapters.all())
         torrents_data = searcher.search_for_tv_show(
-            season.video.name, season.number
+            season.video.name, season.number, season.chapter_count
         )
         if len(torrents_data.items()) >= season.chapter_count:
             season.completed = True
             season.save()
         for number, torrent in torrents_data.items():
-            if number in chapter_numbers:
+            if not torrent or number in chapter_numbers:
                 continue
             torrent_instance = Torrent(
-                magnet=torrent.magnet_link,
+                magnet=torrent.download,
                 status=Torrent.IN_PROGRESS,
                 download_path=os.path.join(
                     config.tv_show_download_path,
