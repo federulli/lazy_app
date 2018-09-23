@@ -2,14 +2,13 @@ from rest_framework import generics
 from ..models import (
     Video,
     Season,
-    Torrent,
-    Chapter,
 )
 from ..serializers import (
     VideoSerializer,
     SeasonSerializer,
 )
 from ..tasks import new_season_task
+from ..omdb_api import get_chapter_count
 
 
 class ListCreateTvShowView(generics.ListCreateAPIView):
@@ -34,6 +33,10 @@ class ListCreateSeasonsView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         video = Video.objects.get(pk=self.kwargs['tv_show_id'])
         serializer.save(
-            video=video
+            video=video,
+            chapter_count=get_chapter_count(
+                video.name,
+                self.request.data['number']
+            )
         )
         new_season_task.delay(serializer.instance.id)

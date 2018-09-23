@@ -9,6 +9,7 @@ from video.models import (
 from torrent_searcher.yts_searcher import YTSSearcher
 from torrent_searcher.pirate_bay_searcher import PirateBaySearcher
 from torrent_searcher.rarbg_searcher import RarbgSearcher
+from .omdb_api import get_chapter_count
 from .configuration import Configuration
 
 
@@ -41,10 +42,6 @@ def new_season_task(self, season_id):
         season.video.name, season.number, season.chapter_count
     )
     print("Torrents found {}".format(len(torrents_data.items())))
-    if len(torrents_data.items()) >= season.chapter_count:
-        print("Completed")
-        season.completed = True
-        season.save()
     for number, torrent in torrents_data.items():
         if torrent:
             torrent_instance = Torrent(
@@ -90,14 +87,13 @@ def search_for_not_found_chapters(self):
     not_completed = Season.objects.filter(completed=False)
     searcher = RarbgSearcher()
     for season in not_completed:
+        if not season.chapter_count:
+            continue
         chapter_numbers = set(chapter.number
                               for chapter in season.chapters.all())
         torrents_data = searcher.search_for_tv_show(
             season.video.name, season.number, season.chapter_count
         )
-        if len(torrents_data.items()) >= season.chapter_count:
-            season.completed = True
-            season.save()
         for number, torrent in torrents_data.items():
             if not torrent or number in chapter_numbers:
                 continue
@@ -139,3 +135,19 @@ def download_subtitles(self):
     # save them to disk, next to the video
     for v in videos:
         save_subtitles(v, subtitles[v], single=True)
+
+
+@app.task(bind=True)
+def refresh_chapter_count(self):
+    not_completed = Season.objects.filter(completed=False)
+    for season in not_completed:
+        chapter_numbers = season.chapters.count()
+        count = get_chapter_count(season.video.name, season.number)
+        if count:
+            season.chapter_count = count
+            if chapter_numbers == count:
+                print("{} season {} finished".format(
+                    season.video.name, season.number)
+                )
+                season.completed = True
+            season.save()
