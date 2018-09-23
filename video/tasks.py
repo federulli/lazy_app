@@ -62,7 +62,7 @@ def new_season_task(self, season_id):
 
 
 @app.task(bind=True)
-def search_for_not_found_movies(self):
+def search_for_not_found_movies(self=None):
     config = Configuration()
     searcher = YTSSearcher(config.yts_url)
     videos = Video.objects.filter(torrent=None, type='MOVIE')
@@ -82,40 +82,43 @@ def search_for_not_found_movies(self):
 
 
 @app.task(bind=True)
-def search_for_not_found_chapters(self):
+def search_for_not_found_chapters(self=None):
     config = Configuration()
     not_completed = Season.objects.filter(completed=False)
     searcher = RarbgSearcher()
     for season in not_completed:
-        if not season.chapter_count:
-            continue
-        chapter_numbers = set(chapter.number
-                              for chapter in season.chapters.all())
-        torrents_data = searcher.search_for_tv_show(
-            season.video.name, season.number, season.chapter_count
-        )
-        for number, torrent in torrents_data.items():
-            if not torrent or number in chapter_numbers:
+        try:
+            if not season.chapter_count:
                 continue
-            torrent_instance = Torrent(
-                magnet=torrent.download,
-                status=Torrent.IN_PROGRESS,
-                download_path=os.path.join(
-                    config.tv_show_download_path,
-                    season.video.name
+            chapter_numbers = set(chapter.number
+                                  for chapter in season.chapters.all())
+            torrents_data = searcher.search_for_tv_show(
+                season.video.name, season.number, season.chapter_count
+            )
+            for number, torrent in torrents_data.items():
+                if not torrent or number in chapter_numbers:
+                    continue
+                torrent_instance = Torrent(
+                    magnet=torrent.download,
+                    status=Torrent.IN_PROGRESS,
+                    download_path=os.path.join(
+                        config.tv_show_download_path,
+                        season.video.name
+                    )
                 )
-            )
-            torrent_instance.save()
-            chapter = Chapter(
-                number=number,
-                torrent=torrent_instance,
-                season=season
-            )
-            chapter.save()
+                torrent_instance.save()
+                chapter = Chapter(
+                    number=number,
+                    torrent=torrent_instance,
+                    season=season
+                )
+                chapter.save()
+        except Exception as e:
+            print(str(e))
 
 
 @app.task(bind=True)
-def download_subtitles(self):
+def download_subtitles(self=None):
     from datetime import timedelta
 
     from babelfish import Language
@@ -138,7 +141,7 @@ def download_subtitles(self):
 
 
 @app.task(bind=True)
-def refresh_chapter_count(self):
+def refresh_chapter_count(self=None):
     not_completed = Season.objects.filter(completed=False)
     for season in not_completed:
         chapter_numbers = season.chapters.count()
