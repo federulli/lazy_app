@@ -15,6 +15,7 @@ schedule.every().hour.do(lambda: refresh('SUBTITLES'))
 schedule.every().day.at("1:00").do(lambda: refresh('MOVIE'))
 schedule.every().day.at("2:00").do(lambda: refresh('CHAPTER_COUNT'))
 schedule.every().day.at("3:00").do(lambda: refresh('TVSHOW'))
+schedule.every().hour.do(lambda: refresh('DELETE_COMPLETED'))
 
 while 1:
     schedule.run_pending()
