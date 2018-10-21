@@ -9,6 +9,7 @@ from video.models import (
 from torrent_searcher.yts_searcher import YTSSearcher
 from torrent_searcher.pirate_bay_searcher import PirateBaySearcher
 from torrent_searcher.rarbg_searcher import RarbgSearcher
+from qbittorrent_api import delete_completed_torrent
 from .omdb_api import get_chapter_count
 from .configuration import Configuration
 
@@ -88,10 +89,12 @@ def search_for_not_found_chapters(self=None):
     searcher = RarbgSearcher()
     for season in not_completed:
         try:
+            print("{} {}".format(season.video.name, season.number))
             if not season.chapter_count:
                 continue
             chapter_numbers = set(chapter.number
                                   for chapter in season.chapters.all())
+            print("chapters: {}".format(chapter_numbers))
             torrents_data = searcher.search_for_tv_show(
                 season.video.name, season.number, season.chapter_count
             )
@@ -146,6 +149,14 @@ def refresh_chapter_count(self=None):
     for season in not_completed:
         chapter_numbers = season.chapters.count()
         count = get_chapter_count(season.video.name, season.number)
+        print(
+            "{} {} count: {} total: {}".format(
+                season.video.name,
+                season.number,
+                chapter_numbers,
+                count
+            )
+        )
         if count:
             season.chapter_count = count
             if chapter_numbers == count:
@@ -154,3 +165,8 @@ def refresh_chapter_count(self=None):
                 )
                 season.completed = True
             season.save()
+
+
+@app.task(bind=True)
+def delete_torrents(self=None):
+    delete_completed_torrent()

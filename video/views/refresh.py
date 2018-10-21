@@ -5,6 +5,7 @@ from ..tasks import (
     search_for_not_found_chapters,
     download_subtitles,
     refresh_chapter_count,
+    delete_torrents,
 )
 
 
@@ -14,6 +15,7 @@ class RefreshView(generics.GenericAPIView):
         'TVSHOW': search_for_not_found_chapters,
         'SUBTITLES': download_subtitles,
         'CHAPTER_COUNT': refresh_chapter_count,
+        'DELETE_COMPLETED': delete_torrents,
     }
 
     def post(self, request):
