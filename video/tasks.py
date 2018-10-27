@@ -6,11 +6,10 @@ from video.models import (
     Season,
     Chapter,
 )
-from torrent_searcher.yts_searcher import YTSSearcher
-from torrent_searcher.pirate_bay_searcher import PirateBaySearcher
-from torrent_searcher.rarbg_searcher import RarbgSearcher
+
+from torrent_searcher.api import Searcher
 from qbittorrent_api import delete_completed_torrent
-from .omdb_api import get_chapter_count
+from .tmdb_api import get_chapter_count
 from .configuration import Configuration
 
 
@@ -20,7 +19,7 @@ def new_movie_task(self, video_id):
     print('Request: {0!r}'.format(self.request))
     video = Video.objects.get(pk=video_id)
     try:
-        searcher = YTSSearcher(config.yts_url)
+        searcher = Searcher(yts_url=config.yts_url)
         magnet = searcher.search_movie(video.name)
         torrent = Torrent(
             status=Torrent.IN_PROGRESS,
@@ -38,15 +37,15 @@ def new_movie_task(self, video_id):
 def new_season_task(self, season_id):
     config = Configuration()
     season = Season.objects.get(pk=season_id)
-    searcher = RarbgSearcher()
-    torrents_data = searcher.search_for_tv_show(
+    searcher = Searcher()
+    torrents_data = searcher.search_for_series(
         season.video.name, season.number, season.chapter_count
     )
     print("Torrents found {}".format(len(torrents_data.items())))
     for number, torrent in torrents_data.items():
         if torrent:
             torrent_instance = Torrent(
-                magnet=torrent.download,
+                magnet=torrent,
                 status=Torrent.IN_PROGRESS,
                 download_path=os.path.join(
                     config.tv_show_download_path,
@@ -65,7 +64,7 @@ def new_season_task(self, season_id):
 @app.task(bind=True)
 def search_for_not_found_movies(self=None):
     config = Configuration()
-    searcher = YTSSearcher(config.yts_url)
+    searcher = Searcher(yts_url=config.yts_url)
     videos = Video.objects.filter(torrent=None, type='MOVIE')
     for video in videos:
         try:
@@ -86,7 +85,7 @@ def search_for_not_found_movies(self=None):
 def search_for_not_found_chapters(self=None):
     config = Configuration()
     not_completed = Season.objects.filter(completed=False)
-    searcher = RarbgSearcher()
+    searcher = Searcher()
     for season in not_completed:
         try:
             print("{} {}".format(season.video.name, season.number))
@@ -94,15 +93,15 @@ def search_for_not_found_chapters(self=None):
                 continue
             chapter_numbers = set(chapter.number
                                   for chapter in season.chapters.all())
-            print("chapters: {}".format(chapter_numbers))
-            torrents_data = searcher.search_for_tv_show(
+            torrents_data = searcher.search_for_series(
                 season.video.name, season.number, season.chapter_count
             )
             for number, torrent in torrents_data.items():
                 if not torrent or number in chapter_numbers:
                     continue
+                print("number {}, magnet: {}".format(number, torrent))
                 torrent_instance = Torrent(
-                    magnet=torrent.download,
+                    magnet=torrent,
                     status=Torrent.IN_PROGRESS,
                     download_path=os.path.join(
                         config.tv_show_download_path,

@@ -8,7 +8,7 @@ from ..serializers import (
     SeasonSerializer,
 )
 from ..tasks import new_season_task
-from ..omdb_api import get_chapter_count
+from ..tmdb_api import get_chapter_count
 
 
 class ListCreateTvShowView(generics.ListCreateAPIView):
