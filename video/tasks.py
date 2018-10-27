@@ -207,25 +207,33 @@ def download_subtitles(self=None):
 def refresh_chapter_count(self=None):
     not_completed = Season.objects.filter(completed=False)
     for season in not_completed:
-        chapter_numbers = season.chapters.count()
-        count = get_chapter_count(season.video.name, season.number)
-        if count:
-            season.chapter_count = count
+        try:
             logger.msg(
-                "season status",
+                "Refreshing chapter count",
                 show=season.video.name,
-                season=season.number,
-                downloaded=chapter_numbers,
-                total=count
+                season=season.number
             )
-            if chapter_numbers == count:
+            chapter_numbers = season.chapters.count()
+            count = get_chapter_count(season.video.name, season.number)
+            if count:
+                season.chapter_count = count
                 logger.msg(
-                    "finished!",
+                    "season status",
                     show=season.video.name,
-                    season=season.number
+                    season=season.number,
+                    downloaded=chapter_numbers,
+                    total=count
                 )
-                season.completed = True
-            season.save()
+                if chapter_numbers == count:
+                    logger.msg(
+                        "finished!",
+                        show=season.video.name,
+                        season=season.number
+                    )
+                    season.completed = True
+                season.save()
+        except Exception as e:
+            logger.msg(str(e))
 
 
 @app.task(bind=True)
