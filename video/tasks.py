@@ -11,26 +11,46 @@ from torrent_searcher.api import Searcher
 from qbittorrent_api import delete_completed_torrent
 from .tmdb_api import get_chapter_count
 from .configuration import Configuration
+import structlog
+
+logger = structlog.get_logger()
 
 
 @app.task(bind=True)
 def new_movie_task(self, video_id):
     config = Configuration()
-    print('Request: {0!r}'.format(self.request))
     video = Video.objects.get(pk=video_id)
-    try:
-        searcher = Searcher(yts_url=config.yts_url)
-        magnet = searcher.search_movie(video.name)
-        torrent = Torrent(
-            status=Torrent.IN_PROGRESS,
-            download_path=config.movie_download_path,
-            magnet=magnet
+    logger.msg("Searching for", movie=video.name)
+    searcher = Searcher(yts_url=config.yts_url)
+    magnet = None
+    for quality in ['1080p', '720p']:
+        logger.msg(
+            "searching",
+            movie=video.name,
+            quality=quality
         )
-        torrent.save()
-        video.torrent = torrent
-        video.save()
-    except Exception as e:
-        print(str(e))
+        try:
+            magnet = searcher.search_movie(video.name, quality)
+            logger.msg(
+                "found!",
+                movie=video.name,
+                magnet=magnet,
+                quality=quality
+            )
+            break
+        except Exception:
+            logger.msg("not found", movie=video.name, quality=quality)
+    if not magnet:
+        raise Exception("not found {}".format(video.name))
+
+    torrent = Torrent(
+        status=Torrent.IN_PROGRESS,
+        download_path=config.movie_download_path,
+        magnet=magnet
+    )
+    torrent.save()
+    video.torrent = torrent
+    video.save()
 
 
 @app.task(bind=True)
@@ -38,12 +58,29 @@ def new_season_task(self, season_id):
     config = Configuration()
     season = Season.objects.get(pk=season_id)
     searcher = Searcher()
+    logger.msg(
+        "Searching chapters",
+        show=season.video.name,
+        season=season.number
+    )
     torrents_data = searcher.search_for_series(
         season.video.name, season.number, season.chapter_count
     )
-    print("Torrents found {}".format(len(torrents_data.items())))
+    logger.msg(
+        "chapters found!",
+        show=season.video.name,
+        season=season.number,
+        total=len(torrents_data.items())
+    )
     for number, torrent in torrents_data.items():
         if torrent:
+            logger.msg(
+                "chapter info",
+                show_name=season.video.name,
+                season=season.number,
+                number=number,
+                magnet=torrent
+            )
             torrent_instance = Torrent(
                 magnet=torrent,
                 status=Torrent.IN_PROGRESS,
@@ -67,28 +104,51 @@ def search_for_not_found_movies(self=None):
     searcher = Searcher(yts_url=config.yts_url)
     videos = Video.objects.filter(torrent=None, type='MOVIE')
     for video in videos:
-        try:
-            magnet = searcher.search_movie(video.name)
-            torrent = Torrent(
-                status=Torrent.IN_PROGRESS,
-                download_path=config.movie_download_path,
-                magnet=magnet
+        magnet = None
+        for quality in ['1080p', '720p']:
+            logger.msg(
+                "searching",
+                movie=video.name,
+                quality=quality
             )
-            torrent.save()
-            video.torrent = torrent
-            video.save()
-        except Exception as e:
-            print(str(e))
+            try:
+                magnet = searcher.search_movie(video.name, quality)
+                logger.msg(
+                    "found!",
+                    movie=video.name,
+                    magnet=magnet,
+                    quality=quality
+                )
+                break
+            except Exception:
+                logger.msg("not found", movie=video.name, quality=quality)
+
+        if not magnet:
+            continue
+
+        torrent = Torrent(
+            status=Torrent.IN_PROGRESS,
+            download_path=config.movie_download_path,
+            magnet=magnet
+        )
+        torrent.save()
+        video.torrent = torrent
+        video.save()
 
 
 @app.task(bind=True)
 def search_for_not_found_chapters(self=None):
+    logger.msg("Searching for new chapters")
     config = Configuration()
     not_completed = Season.objects.filter(completed=False)
     searcher = Searcher()
     for season in not_completed:
         try:
-            print("{} {}".format(season.video.name, season.number))
+            logger.msg(
+                "Searching",
+                show=season.video.name,
+                season=season.number
+            )
             if not season.chapter_count:
                 continue
             chapter_numbers = set(chapter.number
@@ -99,7 +159,7 @@ def search_for_not_found_chapters(self=None):
             for number, torrent in torrents_data.items():
                 if not torrent or number in chapter_numbers:
                     continue
-                print("number {}, magnet: {}".format(number, torrent))
+                logger.msg(season.video.name, number=number, magnet=torrent)
                 torrent_instance = Torrent(
                     magnet=torrent,
                     status=Torrent.IN_PROGRESS,
@@ -116,11 +176,12 @@ def search_for_not_found_chapters(self=None):
                 )
                 chapter.save()
         except Exception as e:
-            print(str(e))
+            logger.error(str(e))
 
 
 @app.task(bind=True)
 def download_subtitles(self=None):
+    logger.msg("Searching for subtitles")
     from datetime import timedelta
 
     from babelfish import Language
@@ -148,19 +209,20 @@ def refresh_chapter_count(self=None):
     for season in not_completed:
         chapter_numbers = season.chapters.count()
         count = get_chapter_count(season.video.name, season.number)
-        print(
-            "{} {} count: {} total: {}".format(
-                season.video.name,
-                season.number,
-                chapter_numbers,
-                count
-            )
-        )
         if count:
             season.chapter_count = count
+            logger.msg(
+                "season status",
+                show=season.video.name,
+                season=season.number,
+                downloaded=chapter_numbers,
+                total=count
+            )
             if chapter_numbers == count:
-                print("{} season {} finished".format(
-                    season.video.name, season.number)
+                logger.msg(
+                    "finished!",
+                    show=season.video.name,
+                    season=season.number
                 )
                 season.completed = True
             season.save()
@@ -168,4 +230,5 @@ def refresh_chapter_count(self=None):
 
 @app.task(bind=True)
 def delete_torrents(self=None):
+    logger.msg("deleting completed torrents")
     delete_completed_torrent()
