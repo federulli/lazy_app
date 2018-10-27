@@ -191,7 +191,7 @@ def download_subtitles(self=None):
     region.configure('dogpile.cache.dbm', arguments={'filename': 'cachefile.dbm'})
 
     # scan for videos newer than 2 weeks and their existing subtitles in a folder
-    videos = scan_videos(config.base_download_path, age=timedelta(weeks=2))
+    videos = scan_videos(config.base_download_path, age=timedelta(days=1))
 
     # download best subtitles
     subtitles = download_best_subtitles(videos,

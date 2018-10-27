@@ -11,3 +11,8 @@ class ListCreateMoviesView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(type='MOVIE')
         new_movie_task.delay(serializer.instance.id)
+
+
+class RetrieveUpdateDestroyMoviesView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VideoSerializer
+    queryset = Video.objects.filter(type='MOVIE')

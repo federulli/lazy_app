@@ -19,6 +19,11 @@ class ListCreateTvShowView(generics.ListCreateAPIView):
         serializer.save(type='TVSHOW')
 
 
+class RetrieveUpdateDestroyTvShowView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VideoSerializer
+    queryset = Video.objects.filter(type='TVSHOW')
+
+
 class ListCreateSeasonsView(generics.ListCreateAPIView):
     model = Season
     serializer_class = SeasonSerializer
@@ -40,3 +45,15 @@ class ListCreateSeasonsView(generics.ListCreateAPIView):
             )
         )
         new_season_task.delay(serializer.instance.id)
+
+
+class RetrieveUpdateDestroySeasonView(generics.RetrieveUpdateDestroyAPIView):
+    model = Season
+    serializer_class = SeasonSerializer
+
+    def get_queryset(self):
+        return Season.objects.filter(
+            video=Video.objects.get(
+                pk=self.kwargs['tv_show_id']
+            )
+        )
