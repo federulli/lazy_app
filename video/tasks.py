@@ -27,19 +27,22 @@ def new_movie_task(self, video_id):
         logger.msg(
             "searching",
             movie=video.name,
-            quality=quality
+            quality=quality,
+            year=video.year
         )
         try:
-            magnet = searcher.search_movie(video.name, quality)
+            magnet = searcher.search_movie(video.name, quality, video.year)
             logger.msg(
                 "found!",
                 movie=video.name,
                 magnet=magnet,
-                quality=quality
+                quality=quality,
+                year=video.year1
             )
             break
         except Exception:
-            logger.msg("not found", movie=video.name, quality=quality)
+            logger.msg("not found",
+                       movie=video.name, quality=quality, year=video.year)
     if not magnet:
         raise Exception("not found {}".format(video.name))
 
@@ -109,19 +112,22 @@ def search_for_not_found_movies(self=None):
             logger.msg(
                 "searching",
                 movie=video.name,
-                quality=quality
+                quality=quality,
+                year=video.year
             )
             try:
-                magnet = searcher.search_movie(video.name, quality)
+                magnet = searcher.search_movie(video.name, quality, video.year)
                 logger.msg(
                     "found!",
                     movie=video.name,
                     magnet=magnet,
-                    quality=quality
+                    quality=quality,
+                    year=video.year
                 )
                 break
             except Exception:
-                logger.msg("not found", movie=video.name, quality=quality)
+                logger.msg("not found",
+                           movie=video.name, quality=quality, year=video.year)
 
         if not magnet:
             continue

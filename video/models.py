@@ -40,8 +40,12 @@ class Video(models.Model):
     )
     name = models.TextField()
     type = models.CharField(max_length=6, choices=TYPES)
+    year = models.IntegerField(null=True)
     torrent = models.ForeignKey(Torrent, on_delete=models.CASCADE,
                                 related_name='movie', null=True)
+
+    class Meta:
+        unique_together = ('name', 'year')
 
 
 class Season(models.Model):
@@ -53,6 +57,9 @@ class Season(models.Model):
     )
     chapter_count = models.IntegerField()
     completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('number', 'video')
 
 
 class Chapter(models.Model):
