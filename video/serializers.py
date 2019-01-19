@@ -17,7 +17,7 @@ class VideoSerializer(serializers.ModelSerializer):
 class SeasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Season
-        exclude = ('video', 'chapter_count')
+        exclude = ('video',)
 
 
 class ChapterSerializer(serializers.ModelSerializer):

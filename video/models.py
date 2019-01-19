@@ -55,7 +55,7 @@ class Season(models.Model):
         related_name='seasons',
         on_delete=models.CASCADE
     )
-    chapter_count = models.IntegerField()
+    chapter_count = models.IntegerField(null=True)
     completed = models.BooleanField(default=False)
 
     class Meta:
