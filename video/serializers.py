@@ -21,7 +21,7 @@ class ChapterSerializer(serializers.ModelSerializer):
 
 
 class SeasonSerializer(serializers.ModelSerializer):
-    chapters = ChapterSerializer(many=True)
+    chapters = ChapterSerializer(many=True, read_only=True)
 
     class Meta:
         model = Season
