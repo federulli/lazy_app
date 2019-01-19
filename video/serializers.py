@@ -14,13 +14,15 @@ class VideoSerializer(serializers.ModelSerializer):
         exclude = ('type',)
 
 
-class SeasonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Season
-        exclude = ('video',)
-
-
 class ChapterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chapter
         fields = '__all__'
+
+
+class SeasonSerializer(serializers.ModelSerializer):
+    chapters = ChapterSerializer(many=True)
+
+    class Meta:
+        model = Season
+        exclude = ('video',)
