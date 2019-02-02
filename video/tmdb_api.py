@@ -24,10 +24,13 @@ def get_tmdb_id(name):
 
 
 def get_chapter_count(name, season):
-    id = get_tmdb_id(name)
-    r = requests.get(
-        ("https://api.themoviedb.org/3/tv/{}/season/"
-         "{}?api_key={}&language=en-US").format(id, season, TMDB_API_KEY)
-    )
-    r.raise_for_status()
-    return len(r.json()['episodes'])
+    try:
+        id = get_tmdb_id(name)
+        r = requests.get(
+            ("https://api.themoviedb.org/3/tv/{}/season/"
+             "{}?api_key={}&language=en-US").format(id, season, TMDB_API_KEY)
+        )
+        r.raise_for_status()
+        return len(r.json()['episodes'])
+    except Exception:
+        return 24
