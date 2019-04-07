@@ -211,7 +211,7 @@ def download_subtitles(self=None):
 
 @app.task(bind=True)
 def refresh_chapter_count(self=None):
-    not_completed = Season.objects.filter(completed=False)
+    not_completed = Season.objects.filter()
     for season in not_completed:
         try:
             logger.msg(
