@@ -237,6 +237,8 @@ def refresh_chapter_count(self=None):
                         season=season.number
                     )
                     season.completed = True
+                else:
+                    season.completed = False
                 season.save()
         except Exception as e:
             logger.msg(str(e))
