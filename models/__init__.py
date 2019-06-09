@@ -1,4 +1,5 @@
 import re
+import os
 from sqlalchemy import (
     Column,
     ForeignKey,
@@ -9,18 +10,23 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, sessionmaker, scoped_session
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('sqlite:///lazy_app.db')
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+db_path = os.path.join(base_dir, 'db.sqlite3')
 
-Session = sessionmaker(bind=engine)
+engine = create_engine(f'sqlite:///{db_path}', convert_unicode=True)
 
-S = Session()
+S = scoped_session(sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine)
+)
 
 Base = declarative_base()
+Base.query = S.query_property()
 
 
 class Torrent(Base):
@@ -29,10 +35,6 @@ class Torrent(Base):
     has_subtitle = Column(Boolean, default=False)
     magnet = Column(String, nullable=False)
     download_path = Column(String, nullable=False)
-
-    """def save(self, *args, **kwargs):
-        post_torrent(self.magnet, self.download_path)
-        return super(Torrent, self).save(*args, **kwargs)"""
 
     @property
     def hash(self):

@@ -1,4 +1,4 @@
-from .models import Configuration as db_config
+from video.models import Configuration as db_config
 import os
 
 

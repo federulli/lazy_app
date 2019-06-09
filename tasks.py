@@ -9,8 +9,8 @@ from video.models import (
 
 from torrent_searcher.api import Searcher
 from qbittorrent_api import delete_completed_torrent
-from .tmdb_api import get_chapter_count
-from .configuration import Configuration
+from tmdb_api import get_chapter_count
+from configuration import Configuration
 import structlog
 
 logger = structlog.get_logger()
