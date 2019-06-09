@@ -1,14 +1,2 @@
--e git+https://github.com/federulli/torrent_searcher.git#egg=torrent_searcher
+sqlalchemy
 -e git+https://github.com/federulli/qbitorrent_api.git#egg=qbitorrent_api
-django
-djangorestframework
-python-dateutil
-lxml
-purl
-celery==4.1.1
-django-celery
-subliminal
-schedule
-redis
-rarbgapi
-structlog
