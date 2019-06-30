@@ -1,8 +1,17 @@
 import graphene
-from schemas.queries import TorrentQuery, MovieQuery
+from schemas.queries import (
+    TorrentQuery,
+    MovieQuery,
+    TVShowQuery,
+)
 
 
-class Query(graphene.ObjectType, TorrentQuery, MovieQuery):
+class Query(
+    graphene.ObjectType,
+    TorrentQuery,
+    MovieQuery,
+    TVShowQuery
+):
     pass
 
 
