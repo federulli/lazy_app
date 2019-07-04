@@ -1,4 +1,8 @@
+celery
+structlog
+requests
 sqlalchemy
+redis
 graphene==2.0.0
 graphene-sqlalchemy==2.0.0
 flask==0.11.1

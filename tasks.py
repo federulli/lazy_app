@@ -1,6 +1,8 @@
 import os
-from videoapp.celery import app
-from video.models import (
+from celery import Celery
+from app import app
+#from videoapp.celery import app
+"""from video.models import (
     Torrent,
     Video,
     Season,
@@ -11,14 +13,19 @@ from torrent_searcher.api import Searcher
 from qbittorrent_api import delete_completed_torrent
 from tmdb_api import get_chapter_count
 from configuration import Configuration
+"""
 import structlog
 
 logger = structlog.get_logger()
 
 
-@app.task(bind=True)
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
+
+
+@celery.task
 def new_movie_task(self, video_id):
-    config = Configuration()
+    """config = Configuration()
     video = Video.objects.get(pk=video_id)
     logger.msg("Searching for", movie=video.name)
     searcher = Searcher(yts_url=config.yts_url)
@@ -53,12 +60,12 @@ def new_movie_task(self, video_id):
     )
     torrent.save()
     video.torrent = torrent
-    video.save()
+    video.save()"""
 
 
-@app.task(bind=True)
-def new_season_task(self, season_id):
-    config = Configuration()
+@celery.task
+def new_season_task(season_id):
+    """config = Configuration()
     season = Season.objects.get(pk=season_id)
     searcher = Searcher()
     logger.msg(
@@ -98,12 +105,12 @@ def new_season_task(self, season_id):
                 torrent=torrent_instance,
                 season=season
             )
-            chapter.save()
+            chapter.save()"""
 
 
-@app.task(bind=True)
+@celery.task
 def search_for_not_found_movies(self=None):
-    config = Configuration()
+    """config = Configuration()
     searcher = Searcher(yts_url=config.yts_url)
     videos = Video.objects.filter(torrent=None, type='MOVIE')
     for video in videos:
@@ -139,12 +146,12 @@ def search_for_not_found_movies(self=None):
         )
         torrent.save()
         video.torrent = torrent
-        video.save()
+        video.save()"""
 
 
-@app.task(bind=True)
+@celery.task
 def search_for_not_found_chapters(self=None):
-    logger.msg("Searching for new chapters")
+    """logger.msg("Searching for new chapters")
     config = Configuration()
     not_completed = Season.objects.filter(completed=False)
     searcher = Searcher()
@@ -182,12 +189,12 @@ def search_for_not_found_chapters(self=None):
                 )
                 chapter.save()
         except Exception as e:
-            logger.error(str(e))
+            logger.error(str(e))"""
 
 
-@app.task(bind=True)
+@celery.task
 def download_subtitles(self=None):
-    logger.msg("Searching for subtitles")
+    """logger.msg("Searching for subtitles")
     from datetime import timedelta
 
     from babelfish import Language
@@ -206,12 +213,12 @@ def download_subtitles(self=None):
 
     # save them to disk, next to the video
     for v in videos:
-        save_subtitles(v, subtitles[v], single=True)
+        save_subtitles(v, subtitles[v], single=True)"""
 
 
-@app.task(bind=True)
+@celery.task
 def refresh_chapter_count(self=None):
-    not_completed = Season.objects.filter()
+    """not_completed = Season.objects.filter()
     for season in not_completed:
         try:
             logger.msg(
@@ -241,10 +248,10 @@ def refresh_chapter_count(self=None):
                     season.completed = False
                 season.save()
         except Exception as e:
-            logger.msg(str(e))
+            logger.msg(str(e))"""
 
 
-@app.task(bind=True)
+@celery.task
 def delete_torrents(self=None):
     logger.msg("deleting completed torrents")
-    delete_completed_torrent()
+    #delete_completed_torrent()

@@ -1,10 +1,14 @@
 from flask import Flask
 from flask_graphql import GraphQLView
 
-from models import S, Torrent
+from models import S
 from schemas import schema
 
 app = Flask(__name__)
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379'
+
+
 app.debug = True
 
 app.add_url_rule(

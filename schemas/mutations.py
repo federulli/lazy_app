@@ -1,5 +1,4 @@
 import graphene
-from models import Movie
 from schemas.types import (
     Movie,
     TVShow,
@@ -26,7 +25,7 @@ class CreateMovie(graphene.Mutation):
     def mutate(self, info, name, year=None):
         movie = MovieModel(name=name, year=year)
         S.add(movie)
-        S.flush()
+        S.commit()
         return CreateMovie(movie=movie)
 
 
@@ -39,5 +38,61 @@ class CreateTVShow(graphene.Mutation):
     def mutate(self, info, name):
         tv_show = TVShowModel(name=name)
         S.add(tv_show)
-        S.flush()
+        S.commit()
         return CreateTVShow(tv_show=tv_show)
+
+
+class CreateSeason(graphene.Mutation):
+    season = graphene.Field(lambda: Season)
+
+    class Arguments:
+        number = graphene.Int(required=True)
+        tv_show_id = graphene.ID(required=True)
+
+    def mutate(self, info, number, tv_show_id):
+        from tasks import new_season_task
+        season = SeasonModel(
+            number=number,
+            tv_show_id=tv_show_id,
+            chapter_count=0,
+            completed=False
+        )
+        S.add(season)
+        S.commit()
+        new_season_task.delay(season.id)
+        return CreateSeason(season=season)
+
+
+class SearchMovies(graphene.Mutation):
+    msg = graphene.String()
+
+    def mutate(self, info):
+        pass
+
+
+class SearchChapters(graphene.Mutation):
+    msg = graphene.String()
+
+    def mutate(self, info):
+        pass
+
+
+class DeleteCompleted(graphene.Mutation):
+    msg = graphene.String()
+
+    def mutate(self, info):
+        pass
+
+
+class DownloadSubtitles(graphene.Mutation):
+    msg = graphene.String()
+
+    def mutate(self, info):
+        pass
+
+
+class ReloadChapterCount(graphene.Mutation):
+    msg = graphene.String()
+
+    def mutate(self, info):
+        pass

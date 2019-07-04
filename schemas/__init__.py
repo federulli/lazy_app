@@ -5,7 +5,11 @@ from schemas.queries import (
     TVShowQuery,
 )
 
-from schemas.mutations import CreateMovie
+from schemas.mutations import (
+    CreateMovie,
+    CreateTVShow,
+    CreateSeason,
+)
 
 
 class Query(
@@ -19,6 +23,8 @@ class Query(
 
 class Mutation(graphene.ObjectType):
     create_movie = CreateMovie.Field()
+    create_tv_show = CreateTVShow.Field()
+    create_season = CreateSeason.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
