@@ -8,12 +8,17 @@ from app import app
     Season,
     Chapter,
 )
-
-from torrent_searcher.api import Searcher
-from qbittorrent_api import delete_completed_torrent
 from tmdb_api import get_chapter_count
-from configuration import Configuration
+
 """
+from models import (
+    S,
+    Movie,
+    Torrent,
+)
+from qbittorrent_api import delete_completed_torrent
+from torrent_searcher.api import Searcher
+from configuration import Configuration
 import structlog
 
 logger = structlog.get_logger()
@@ -109,44 +114,49 @@ def new_season_task(season_id):
 
 
 @celery.task
-def search_for_not_found_movies(self=None):
-    """config = Configuration()
+def search_for_not_found_movies():
+    config = Configuration()
     searcher = Searcher(yts_url=config.yts_url)
-    videos = Video.objects.filter(torrent=None, type='MOVIE')
-    for video in videos:
+    movies = Movie.query.filter_by(torrent=None)
+    for movie in movies:
         magnet = None
-        for quality in ['1080p', '720p']:
+        for quality in ('1080p', '720p'):
             logger.msg(
                 "searching",
-                movie=video.name,
+                movie=movie.name,
                 quality=quality,
-                year=video.year
+                year=movie.year
             )
             try:
-                magnet = searcher.search_movie(video.name, quality, video.year)
+                magnet = searcher.search_movie(
+                    movie.name, quality, movie.year)
                 logger.msg(
                     "found!",
-                    movie=video.name,
+                    movie=movie.name,
                     magnet=magnet,
                     quality=quality,
-                    year=video.year
+                    year=movie.year
                 )
                 break
             except Exception:
-                logger.msg("not found",
-                           movie=video.name, quality=quality, year=video.year)
+                logger.msg(
+                    "not found",
+                    movie=movie.name,
+                    quality=quality,
+                    year=movie.year
+                )
 
         if not magnet:
             continue
 
         torrent = Torrent(
-            status=Torrent.IN_PROGRESS,
             download_path=config.movie_download_path,
             magnet=magnet
         )
-        torrent.save()
-        video.torrent = torrent
-        video.save()"""
+        S.add(torrent)
+        movie.torrent = torrent
+        S.add(movie)
+        S.commit()
 
 
 @celery.task

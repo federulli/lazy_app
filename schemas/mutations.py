@@ -67,7 +67,8 @@ class SearchMovies(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        pass
+        from tasks import search_for_not_found_movies
+        search_for_not_found_movies.delay()
 
 
 class SearchChapters(graphene.Mutation):
