@@ -160,7 +160,7 @@ def search_for_not_found_movies():
 
 
 @celery.task
-def search_for_not_found_chapters(self=None):
+def search_for_not_found_chapters():
     """logger.msg("Searching for new chapters")
     config = Configuration()
     not_completed = Season.objects.filter(completed=False)
@@ -203,8 +203,8 @@ def search_for_not_found_chapters(self=None):
 
 
 @celery.task
-def download_subtitles(self=None):
-    """logger.msg("Searching for subtitles")
+def download_subtitles():
+    logger.msg("Searching for subtitles")
     from datetime import timedelta
 
     from babelfish import Language
@@ -223,7 +223,7 @@ def download_subtitles(self=None):
 
     # save them to disk, next to the video
     for v in videos:
-        save_subtitles(v, subtitles[v], single=True)"""
+        save_subtitles(v, subtitles[v], single=True)
 
 
 @celery.task
@@ -262,6 +262,6 @@ def refresh_chapter_count(self=None):
 
 
 @celery.task
-def delete_torrents(self=None):
+def delete_torrents():
     logger.msg("deleting completed torrents")
-    #delete_completed_torrent()
+    delete_completed_torrent()

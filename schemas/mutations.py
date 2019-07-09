@@ -75,25 +75,30 @@ class SearchChapters(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        pass
+        from tasks import search_for_not_found_chapters
+        search_for_not_found_chapters.delay()
 
 
 class DeleteCompleted(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        pass
+        from tasks import delete_torrents
+        delete_torrents.delay()
 
 
 class DownloadSubtitles(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        pass
+        from tasks import download_subtitles
+        download_subtitles.delay()
 
 
 class ReloadChapterCount(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        pass
+        from tasks import download_subtitles
+        download_subtitles.delay()
+
