@@ -1,6 +1,5 @@
 import os
 from celery import Celery
-from app import app
 #from videoapp.celery import app
 """from video.models import (
     Torrent,
@@ -19,56 +18,64 @@ from models import (
 from qbittorrent_api import delete_completed_torrent
 from torrent_searcher.api import Searcher
 from configuration import Configuration
+from models.db_events import load_listeners
 import structlog
 
 logger = structlog.get_logger()
 
 
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
+celery_app = Celery("task", broker="redis://redis:6379/0")
 
 
-@celery.task
-def new_movie_task(self, video_id):
-    """config = Configuration()
-    video = Video.objects.get(pk=video_id)
-    logger.msg("Searching for", movie=video.name)
+load_listeners()
+
+
+@celery_app.task
+def new_movie_task(movie_id):
+    config = Configuration()
+    movie = Movie.query.get(movie_id)
+    logger.msg("Searching for", movie=movie.name)
     searcher = Searcher(yts_url=config.yts_url)
     magnet = None
     for quality in ['1080p', '720p']:
         logger.msg(
             "searching",
-            movie=video.name,
+            movie=movie.name,
             quality=quality,
-            year=video.year
+            year=movie.year
         )
         try:
-            magnet = searcher.search_movie(video.name, quality, video.year)
+            magnet = searcher.search_movie(
+                movie.name, quality, movie.year
+            )
             logger.msg(
                 "found!",
-                movie=video.name,
+                movie=movie.name,
                 magnet=magnet,
                 quality=quality,
-                year=video.year1
+                year=movie.year
             )
             break
         except Exception:
-            logger.msg("not found",
-                       movie=video.name, quality=quality, year=video.year)
+            logger.msg(
+                "not found",
+                movie=movie.name,
+                quality=quality,
+                year=movie.year
+            )
     if not magnet:
-        raise Exception("not found {}".format(video.name))
+        raise Exception("not found {}".format(movie.name))
 
     torrent = Torrent(
-        status=Torrent.IN_PROGRESS,
         download_path=config.movie_download_path,
         magnet=magnet
     )
-    torrent.save()
-    video.torrent = torrent
-    video.save()"""
+    S.add(torrent)
+    movie.torrent = torrent
+    S.commit()
 
 
-@celery.task
+@celery_app.task
 def new_season_task(season_id):
     """config = Configuration()
     season = Season.objects.get(pk=season_id)
@@ -113,7 +120,7 @@ def new_season_task(season_id):
             chapter.save()"""
 
 
-@celery.task
+@celery_app.task
 def search_for_not_found_movies():
     config = Configuration()
     searcher = Searcher(yts_url=config.yts_url)
@@ -159,7 +166,7 @@ def search_for_not_found_movies():
         S.commit()
 
 
-@celery.task
+@celery_app.task
 def search_for_not_found_chapters():
     """logger.msg("Searching for new chapters")
     config = Configuration()
@@ -202,7 +209,7 @@ def search_for_not_found_chapters():
             logger.error(str(e))"""
 
 
-@celery.task
+@celery_app.task
 def download_subtitles():
     logger.msg("Searching for subtitles")
     from datetime import timedelta
@@ -226,7 +233,7 @@ def download_subtitles():
         save_subtitles(v, subtitles[v], single=True)
 
 
-@celery.task
+@celery_app.task
 def refresh_chapter_count(self=None):
     """not_completed = Season.objects.filter()
     for season in not_completed:
@@ -261,7 +268,12 @@ def refresh_chapter_count(self=None):
             logger.msg(str(e))"""
 
 
-@celery.task
+@celery_app.task
 def delete_torrents():
     logger.msg("deleting completed torrents")
     delete_completed_torrent()
+
+
+@celery_app.task
+def test_task():
+    print("test task")

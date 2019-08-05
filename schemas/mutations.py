@@ -13,6 +13,7 @@ from models import (
     Season as SeasonModel,
     Chapter as ChapterModel,
 )
+from tasks import new_movie_task
 
 
 class CreateMovie(graphene.Mutation):
@@ -26,6 +27,7 @@ class CreateMovie(graphene.Mutation):
         movie = MovieModel(name=name, year=year)
         S.add(movie)
         S.commit()
+        new_movie_task.delay(movie.id)
         return CreateMovie(movie=movie)
 
 

@@ -13,11 +13,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref, sessionmaker, scoped_session
 
 from sqlalchemy import create_engine
+from sqlalchemy_utils import database_exists, create_database
 
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-db_path = os.path.join(base_dir, 'db.sqlite3')
 
-engine = create_engine(f'sqlite:///{db_path}', convert_unicode=True)
+engine = create_engine('postgresql+psycopg2://postgres:postgres@database/database_name')
+
+if not database_exists(engine.url):
+    create_database(engine.url)
 
 S = scoped_session(sessionmaker(
     autocommit=False,
@@ -50,7 +52,7 @@ class Video(Base):
     MOVIE = 'MOVIE'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    type = Column(Enum(*[TV_SHOW, MOVIE]), nullable=False)
+    type = Column(Enum(*[TV_SHOW, MOVIE], name="video_type"), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_on': type,

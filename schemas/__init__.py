@@ -10,6 +10,7 @@ from schemas.mutations import (
     CreateTVShow,
     CreateSeason,
     SearchMovies,
+    DeleteCompleted,
 )
 
 
@@ -27,6 +28,7 @@ class Mutation(graphene.ObjectType):
     create_tv_show = CreateTVShow.Field()
     create_season = CreateSeason.Field()
     search_movies = SearchMovies.Field()
+    delete_completed = DeleteCompleted.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

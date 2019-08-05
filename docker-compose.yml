@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  backend:
+    build: .
+    command: ["flask", "run"]
+    environment:
+      FLASK_APP: "app.py"
+      FLASK_RUN_HOST: "0.0.0.0"
+      WDB_SOCKET_SERVER: wdb
+    ports:
+      - "5000:5000"
+
+  redis:
+    image: "redis:alpine"
+
+  database:
+    image: "postgres"
+    ports:
+      - "5432:5432"
+
+  celery:
+    build: .
+    environment:
+      WDB_SOCKET_SERVER: wdb
+      QBITTORRENT_HOST: "qbittorrent"
+      QBITTORRENT_USERNAME: "admin"
+      QBITTORRENT_PASSWORD: "adminadmin"
+    command: ["celery", "worker", "-A", "tasks", "--loglevel=info"]
+
+  qbittorrent:
+    image: linuxserver/qbittorrent
+    container_name: qbittorrent
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/London
+      UMASK_SET: 022
+      WEBUI_PORT: 8080
+    volumes:
+      - qbittorrent_config:/config
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+      - 8080:8080
+    restart: unless-stopped
+
+  wdb:
+    image: kozea/wdb:3.2.5
+    ports:
+      - "1984:1984"
+volumes:
+  qbittorrent_config:

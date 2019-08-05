@@ -1,4 +1,6 @@
 celery
+sqlalchemy-utils
+psycopg2
 structlog
 requests
 sqlalchemy
@@ -14,5 +16,6 @@ rarbgapi
 python-dateutil
 lxml
 purl
+wdb
 -e git+https://github.com/federulli/torrent_searcher.git#egg=torrent_searcher
 -e git+https://github.com/federulli/qbitorrent_api.git#egg=qbitorrent_api
