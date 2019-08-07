@@ -13,7 +13,13 @@ from models import (
     Season as SeasonModel,
     Chapter as ChapterModel,
 )
-from tasks import new_movie_task
+from tasks import (
+    new_movie_task,
+    new_season_task,
+    search_for_not_found_chapters,
+    refresh_chapter_count,
+    download_subtitles,
+)
 
 
 class CreateMovie(graphene.Mutation):
@@ -52,7 +58,6 @@ class CreateSeason(graphene.Mutation):
         tv_show_id = graphene.ID(required=True)
 
     def mutate(self, info, number, tv_show_id):
-        from tasks import new_season_task
         season = SeasonModel(
             number=number,
             tv_show_id=tv_show_id,
@@ -77,7 +82,6 @@ class SearchChapters(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        from tasks import search_for_not_found_chapters
         search_for_not_found_chapters.delay()
 
 
@@ -93,7 +97,6 @@ class DownloadSubtitles(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        from tasks import download_subtitles
         download_subtitles.delay()
 
 
@@ -101,6 +104,5 @@ class ReloadChapterCount(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        from tasks import download_subtitles
-        download_subtitles.delay()
+        refresh_chapter_count.delay()
 

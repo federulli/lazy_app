@@ -1,12 +1,15 @@
 from flask import Flask
+import os
 from flask_graphql import GraphQLView
 from tasks import celery_app, test_task
 from models import S, create_tables
 from schemas import schema
 
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+
 app = Flask(__name__)
-app.config['CELERY_BROKER_URL'] = 'redis://redis:6379'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://redis:6379'
+app.config['CELERY_BROKER_URL'] = f'redis://{REDIS_HOST}:6379'
+app.config['CELERY_RESULT_BACKEND'] = f'redis://{REDIS_HOST}:6379'
 
 
 app.debug = True

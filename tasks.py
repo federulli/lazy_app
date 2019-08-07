@@ -1,19 +1,13 @@
 import os
 from celery import Celery
-#from videoapp.celery import app
-"""from video.models import (
-    Torrent,
-    Video,
-    Season,
-    Chapter,
-)
-from tmdb_api import get_chapter_count
 
-"""
+from tmdb_api import get_chapter_count
 from models import (
     S,
     Movie,
     Torrent,
+    Season,
+    Chapter,
 )
 from qbittorrent_api import delete_completed_torrent
 from torrent_searcher.api import Searcher
@@ -23,8 +17,9 @@ import structlog
 
 logger = structlog.get_logger()
 
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 
-celery_app = Celery("task", broker="redis://redis:6379/0")
+celery_app = Celery("task", broker=f"redis://{REDIS_HOST}:6379/0")
 
 
 load_listeners()
@@ -77,20 +72,24 @@ def new_movie_task(movie_id):
 
 @celery_app.task
 def new_season_task(season_id):
-    """config = Configuration()
-    season = Season.objects.get(pk=season_id)
+    config = Configuration()
+    season = Season.query.get(season_id)
+    season.chapter_count = get_chapter_count(
+        season.tv_show.name,
+        season.number
+    )
     searcher = Searcher()
     logger.msg(
         "Searching chapters",
-        show=season.video.name,
+        show=season.tv_show.name,
         season=season.number
     )
     torrents_data = searcher.search_for_series(
-        season.video.name, season.number, season.chapter_count
+        season.tv_show.name, season.number, season.chapter_count
     )
     logger.msg(
         "chapters found!",
-        show=season.video.name,
+        show=season.tv_show.name,
         season=season.number,
         total=len(torrents_data.items())
     )
@@ -98,26 +97,27 @@ def new_season_task(season_id):
         if torrent:
             logger.msg(
                 "chapter info",
-                show_name=season.video.name,
+                show_name=season.tv_show.name,
                 season=season.number,
                 number=number,
                 magnet=torrent
             )
             torrent_instance = Torrent(
                 magnet=torrent,
-                status=Torrent.IN_PROGRESS,
                 download_path=os.path.join(
                     config.tv_show_download_path,
-                    season.video.name
+                    season.tv_show.name,
+                    str(season.number)
                 )
             )
-            torrent_instance.save()
             chapter = Chapter(
                 number=number,
                 torrent=torrent_instance,
                 season=season
             )
-            chapter.save()"""
+            S.add(torrent_instance)
+            S.add(chapter)
+            S.commit()
 
 
 @celery_app.task
@@ -162,51 +162,53 @@ def search_for_not_found_movies():
         )
         S.add(torrent)
         movie.torrent = torrent
-        S.add(movie)
         S.commit()
 
 
 @celery_app.task
 def search_for_not_found_chapters():
-    """logger.msg("Searching for new chapters")
+    logger.msg("Searching for new chapters")
     config = Configuration()
-    not_completed = Season.objects.filter(completed=False)
+    not_completed = Season.query.filter_by(completed=False)
     searcher = Searcher()
     for season in not_completed:
         try:
             logger.msg(
                 "Searching",
-                show=season.video.name,
+                show=season.tv_show.name,
                 season=season.number
             )
             if not season.chapter_count:
                 continue
-            chapter_numbers = set(chapter.number
-                                  for chapter in season.chapters.all())
+            chapter_numbers = set(
+                chapter.number
+                for chapter in season.chapters
+            )
             torrents_data = searcher.search_for_series(
-                season.video.name, season.number, season.chapter_count
+                season.tv_show.name, season.number, season.chapter_count
             )
             for number, torrent in torrents_data.items():
                 if not torrent or number in chapter_numbers:
                     continue
-                logger.msg(season.video.name, number=number, magnet=torrent)
+                logger.msg(season.tv_show.name, number=number, magnet=torrent)
                 torrent_instance = Torrent(
                     magnet=torrent,
-                    status=Torrent.IN_PROGRESS,
                     download_path=os.path.join(
                         config.tv_show_download_path,
-                        season.video.name
+                        season.tv_show.name,
+                        str(season.number),
                     )
                 )
-                torrent_instance.save()
+                S.add(torrent_instance)
                 chapter = Chapter(
                     number=number,
                     torrent=torrent_instance,
                     season=season
                 )
-                chapter.save()
+                S.add(chapter)
+                S.commit()
         except Exception as e:
-            logger.error(str(e))"""
+            logger.error(str(e))
 
 
 @celery_app.task
@@ -234,22 +236,22 @@ def download_subtitles():
 
 
 @celery_app.task
-def refresh_chapter_count(self=None):
-    """not_completed = Season.objects.filter()
+def refresh_chapter_count():
+    not_completed = Season.query.all()
     for season in not_completed:
         try:
             logger.msg(
                 "Refreshing chapter count",
-                show=season.video.name,
+                show=season.tv_show.name,
                 season=season.number
             )
-            chapter_numbers = season.chapters.count()
-            count = get_chapter_count(season.video.name, season.number)
+            chapter_numbers = len(season.chapters)
+            count = get_chapter_count(season.tv_show.name, season.number)
             if count:
                 season.chapter_count = count
                 logger.msg(
                     "season status",
-                    show=season.video.name,
+                    show=season.tv_show.name,
                     season=season.number,
                     downloaded=chapter_numbers,
                     total=count
@@ -263,9 +265,9 @@ def refresh_chapter_count(self=None):
                     season.completed = True
                 else:
                     season.completed = False
-                season.save()
+                S.commit()
         except Exception as e:
-            logger.msg(str(e))"""
+            logger.msg(str(e))
 
 
 @celery_app.task
