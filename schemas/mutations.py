@@ -3,7 +3,6 @@ from schemas.types import (
     Movie,
     TVShow,
     Season,
-    Chapter,
 )
 
 from models import (
@@ -11,7 +10,6 @@ from models import (
     Movie as MovieModel,
     TVShow as TVShowModel,
     Season as SeasonModel,
-    Chapter as ChapterModel,
 )
 from tasks import (
     new_movie_task,
@@ -19,6 +17,12 @@ from tasks import (
     search_for_not_found_chapters,
     refresh_chapter_count,
     download_subtitles,
+
+)
+
+from qbittorrent_api import (
+    delete_completed_torrent,
+    delete_all_torrents,
 )
 
 
@@ -89,8 +93,14 @@ class DeleteCompleted(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info):
-        from tasks import delete_torrents
-        delete_torrents.delay()
+        delete_completed_torrent()
+
+
+class DeleteAllTorrents(graphene.Mutation):
+    msg = graphene.String()
+
+    def mutate(self, info):
+        delete_all_torrents()
 
 
 class DownloadSubtitles(graphene.Mutation):

@@ -271,11 +271,5 @@ def refresh_chapter_count():
 
 
 @celery_app.task
-def delete_torrents():
-    logger.msg("deleting completed torrents")
-    delete_completed_torrent()
-
-
-@celery_app.task
 def test_task():
     print("test task")

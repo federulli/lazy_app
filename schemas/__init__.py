@@ -13,6 +13,7 @@ from schemas.mutations import (
     DeleteCompleted,
     SearchChapters,
     ReloadChapterCount,
+    DeleteAllTorrents,
 )
 
 
@@ -33,6 +34,7 @@ class Mutation(graphene.ObjectType):
     search_chapters = SearchChapters.Field()
     delete_completed = DeleteCompleted.Field()
     reload_chapter_count = ReloadChapterCount.Field()
+    delete_all_torrents = DeleteAllTorrents.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
