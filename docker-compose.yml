@@ -45,8 +45,10 @@ services:
       UMASK_SET: 022
       WEBUI_PORT: 8080
     volumes:
-       - C:/workingdir:/downloads
-       - qbittorrent_config:/config
+       - /tmp/qbittorrent_downloads:/downloads
+       - /tmp/qbittorrent_config:/config
+       - /tmp/media/movies:/media/movies
+       - /tmp/media/tv_shows:/media/tv_shows
     ports:
       - 6881:6881
       - 6881:6881/udp
@@ -70,15 +72,16 @@ services:
       - 32413:32413/udp
       - 32414:32414/udp
     volumes:
-      - /tmp/:/config
-      - /tmp/:/data/tvshows
-      - /tmp/:/data/movies
-      - /tmp/:/transcode
+      - /tmp/plex_config:/config
+      - /tmp/media/tv_shows:/data/tv_shows
+      - /tmp/media/movies:/data/movies
+      - /tmp/transcode:/transcode
     restart: unless-stopped
 
   wdb:
     image: kozea/wdb:3.2.5
     ports:
       - "1984:1984"
+
 volumes:
   qbittorrent_config:
