@@ -5,6 +5,9 @@ services:
     build: .
     container_name: "backend"
     command: ["flask", "run"]
+    depends_on: 
+      - celery
+      - database
     environment:
       FLASK_APP: "app.py"
       FLASK_RUN_HOST: "0.0.0.0"
@@ -21,12 +24,18 @@ services:
 
   database:
     image: "postgres"
+    environment: 
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
 
   celery:
     build: .
     container_name: "celery"
+    depends_on: 
+      - database
+      - redis
+      - qbittorrent
     environment:
       WDB_SOCKET_SERVER: wdb
       REDIS_HOST: "redis"
@@ -36,7 +45,7 @@ services:
     command: ["celery", "worker", "-A", "tasks", "--loglevel=info"]
 
   qbittorrent:
-    image: linuxserver/qbittorrent
+    image: linuxserver/qbittorrent:100
     container_name: qbittorrent
     environment:
       PUID: 1000
@@ -47,8 +56,8 @@ services:
     volumes:
        - /tmp/qbittorrent_downloads:/downloads
        - /tmp/qbittorrent_config:/config
-       - /tmp/media/movies:/media/movies
-       - /tmp/media/tv_shows:/media/tv_shows
+       - H:\movies:/downloads/movies
+       - H:\movies:/downloads/tv_shows
     ports:
       - 6881:6881
       - 6881:6881/udp
@@ -74,7 +83,7 @@ services:
     volumes:
       - /tmp/plex_config:/config
       - /tmp/media/tv_shows:/data/tv_shows
-      - /tmp/media/movies:/data/movies
+      - H:\movies:/data/movies
       - /tmp/transcode:/transcode
     restart: unless-stopped
 

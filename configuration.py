@@ -2,7 +2,7 @@ from models import Configuration as db_config
 import os
 YTS_URL_DEFAULT = 'https://yts.am/api/v2'
 TPB_URL_DEFAULT = ''
-BASE_PATH_DEFAULT = '/media'
+BASE_PATH_DEFAULT = '/downloads'
 MOVIE_SUB_PATH_DEFAULT = 'movies'
 TV_SHOWS_SUB_PATH_DEFAULT = 'tv_shows'
 

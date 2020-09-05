@@ -1,22 +1,19 @@
-celery
-sqlalchemy-utils
-psycopg2
-structlog
-requests
-sqlalchemy
-redis
-graphene
-graphql-utils
-graphene-sqlalchemy
-flask
-flask-graphql
-subliminal
-schedule
-redis
-rarbgapi
-python-dateutil
-lxml
+celery==4.4.7
+sqlalchemy-utils==0.36.8
+psycopg2==2.8.5
+structlog==20.1.0
+requests==2.24.0
+sqlalchemy==1.3.19
+redis==3.5.3
+graphene==2.1.8
+graphql-utils==0.3
+graphene-sqlalchemy==2.3.0
+flask==1.1.2
+flask-graphql==2.0.1
+subliminal==2.1.0
+schedule==0.6.0
+python-dateutil==2.8.1
 purl
 wdb
--e git+https://github.com/federulli/torrent_searcher.git#egg=torrent_searcher
+-e git+https://github.com/federulli/torrent_searcher.git@new_searcher#egg=torrent_searcher
 -e git+https://github.com/federulli/qbitorrent_api.git#egg=qbitorrent_api
