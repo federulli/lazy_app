@@ -9,7 +9,6 @@ from models import (
     Season,
     Chapter,
 )
-from qbittorrent_api import delete_completed_torrent
 from torrent_searcher.api import Searcher, Movie as SMovie, Series as SSeries
 from configuration import Configuration
 from models.db_events import load_listeners
@@ -59,8 +58,8 @@ def search_for_not_found_movies():
     config = Configuration()
     movies = Movie.query.filter_by(torrent=None)
     movies_dict = {movie: SMovie(name=movie.name, year=movie.year, quality='1080p') for movie in movies}
-    searcher.search(movies_dict.values())
-    for movie_orm_instance, movie in movies_dict:
+    searcher.search(list(movies_dict.values()))
+    for movie_orm_instance, movie in movies_dict.items():
         if movie.magnet:
             torrent = Torrent(
                 download_path=config.movie_download_path,
@@ -123,7 +122,7 @@ def search_for_not_found_chapters():
         ) for season in not_completed
     }
 
-    searcher.search(seasons_dict.values())
+    searcher.search(list(seasons_dict.values()))
     for season, series in seasons_dict.items():
         episode_numbers = set(
             chapter.number
