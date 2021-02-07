@@ -45,6 +45,14 @@ services:
       QBITTORRENT_USERNAME: "admin"
       QBITTORRENT_PASSWORD: "adminadmin"
     command: ["celery", "worker", "-A", "tasks", "--loglevel=info"]
+  
+  scheduler:
+    build: .
+    container_name: "scheduler"
+    restart: on-failure
+    depends_on: 
+      - backend
+    command: ["python3", "scheduler/app.py"]
 
   qbittorrent:
     image: linuxserver/qbittorrent:100

@@ -13,6 +13,7 @@ flask-graphql==2.0.1
 subliminal==2.1.0
 schedule==0.6.0
 python-dateutil==2.8.1
+gql==2.0.0
 purl
 wdb
 -e git+https://github.com/federulli/torrent_searcher.git@new_searcher#egg=torrent_searcher
